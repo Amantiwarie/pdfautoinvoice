@@ -1,0 +1,8 @@
+com\example\invoice\dto\InvoiceRequest.class
+com\example\invoice\model\Dealer.class
+com\example\invoice\model\Vehicle.class
+com\example\invoice\service\InvoicePdfService.class
+com\example\invoice\AppData.class
+com\example\invoice\InvoiceApplication.class
+com\example\invoice\service\InvoicePdfService$InvoicePayload.class
+com\example\invoice\controller\InvoiceController.class
