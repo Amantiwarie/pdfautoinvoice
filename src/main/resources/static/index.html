@@ -1,87 +1,1376 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Invoice Generator</title>
+  <title>Invoice Management System</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 24px; max-width: 720px; margin: auto; }
-    label { display:block; margin-top:12px; }
-    select,input { width:100%; padding:8px; margin-top:6px; }
-    button { margin-top:12px; padding:10px 16px; }
-    .status { margin-top:12px; color: green; }
-    .error { margin-top:12px; color: red; }
+    :root {
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success-color: #10b981;
+      --error-color: #ef4444;
+      --warning-color: #f59e0b;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --border-radius: 8px;
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--gray-50);
+      color: var(--gray-800);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 1rem 2rem;
+      background: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .tab-button:hover {
+      background: var(--gray-50);
+      color: var(--primary-color);
+    }
+
+    .tab-button.active {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-input, .form-select {
+      padding: 0.75rem;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-input.error, .form-select.error {
+      border-color: var(--error-color);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-success {
+      background: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #059669;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .data-table th {
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .data-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0.5rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-button {
+        padding: 0.75rem 1rem;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .card {
+        padding: 1rem;
+      }
+
+      .data-table {
+        font-size: 0.875rem;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 0.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: 1.5rem 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.75rem;
+      }
+
+      .tab-content {
+        padding: 1rem;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
-  <h2>Invoice Generator</h2>
-  <div>
-    <label>Dealer
-      <select id="dealer"></select>
-    </label>
-    <label>Vehicle
-      <select id="vehicle"></select>
-    </label>
-    <label>Customer Name
-      <input id="customer" placeholder="Customer Name"/>
-    </label>
-    <button id="gen">Generate Invoice (download PDF)</button>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-file-invoice"></i> Invoice Management System</h1>
+      <p>Manage dealers, vehicles, and generate professional invoices</p>
+    </div>
 
-    <div class="status" id="status"></div>
-    <div class="error" id="error"></div>
+    <div class="tabs">
+      <button class="tab-button active" data-tab="invoice">
+        <i class="fas fa-file-invoice-dollar"></i>
+        Generate Invoice
+      </button>
+      <button class="tab-button" data-tab="dealers">
+        <i class="fas fa-store"></i>
+        Manage Dealers
+      </button>
+      <button class="tab-button" data-tab="vehicles">
+        <i class="fas fa-car"></i>
+        Manage Vehicles
+      </button>
+    </div>
+
+    <!-- Invoice Generation Tab -->
+    <div class="tab-content active" id="invoice-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Generate Invoice</h2>
+        </div>
+        
+        <form id="invoice-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label" for="dealer-select">
+                <i class="fas fa-store"></i>
+                Select Dealer
+              </label>
+              <select id="dealer-select" class="form-select" required>
+                <option value="">Loading dealers...</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="vehicle-select">
+                <i class="fas fa-car"></i>
+                Select Vehicle
+              </label>
+              <select id="vehicle-select" class="form-select" required>
+                <option value="">Loading vehicles...</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="customer-name">
+                <i class="fas fa-user"></i>
+                Customer Name
+              </label>
+              <input 
+                type="text" 
+                id="customer-name" 
+                class="form-input" 
+                placeholder="Enter customer name"
+                required
+              />
+            </div>
+          </div>
+          
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="generate-btn">
+              <i class="fas fa-download"></i>
+              Generate & Download Invoice
+            </button>
+          </div>
+        </form>
+        
+        <div id="invoice-alerts"></div>
+      </div>
+    </div>
+
+    <!-- Dealers Management Tab -->
+    <div class="tab-content" id="dealers-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Dealer Management</h2>
+          <button class="btn btn-primary" id="add-dealer-btn">
+            <i class="fas fa-plus"></i>
+            Add New Dealer
+          </button>
+        </div>
+        
+        <!-- Add/Edit Dealer Form -->
+        <div id="dealer-form-container" class="hidden">
+          <form id="dealer-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="dealer-name">
+                  <i class="fas fa-store"></i>
+                  Dealer Name
+                </label>
+                <input 
+                  type="text" 
+                  id="dealer-name" 
+                  class="form-input" 
+                  placeholder="Enter dealer name"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="dealer-address">
+                  <i class="fas fa-map-marker-alt"></i>
+                  Address
+                </label>
+                <input 
+                  type="text" 
+                  id="dealer-address" 
+                  class="form-input" 
+                  placeholder="Enter dealer address"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="dealer-phone">
+                  <i class="fas fa-phone"></i>
+                  Phone Number
+                </label>
+                <input 
+                  type="tel" 
+                  id="dealer-phone" 
+                  class="form-input" 
+                  placeholder="Enter phone number"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="dealer-tax">
+                  <i class="fas fa-receipt"></i>
+                  Tax Number
+                </label>
+                <input 
+                  type="text" 
+                  id="dealer-tax" 
+                  class="form-input" 
+                  placeholder="Enter tax number"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div class="btn-group">
+              <button type="submit" class="btn btn-success" id="save-dealer-btn">
+                <i class="fas fa-save"></i>
+                Save Dealer
+              </button>
+              <button type="button" class="btn btn-secondary" id="cancel-dealer-btn">
+                <i class="fas fa-times"></i>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        <div id="dealers-list">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Tax Number</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dealers-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem;">
+                  <div class="loading"></div>
+                  Loading dealers...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="dealer-alerts"></div>
+      </div>
+    </div>
+
+    <!-- Vehicles Management Tab -->
+    <div class="tab-content" id="vehicles-tab">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Vehicle Management</h2>
+          <button class="btn btn-primary" id="add-vehicle-btn">
+            <i class="fas fa-plus"></i>
+            Add New Vehicle
+          </button>
+        </div>
+        
+        <!-- Add/Edit Vehicle Form -->
+        <div id="vehicle-form-container" class="hidden">
+          <form id="vehicle-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="vehicle-make">
+                  <i class="fas fa-industry"></i>
+                  Make
+                </label>
+                <input 
+                  type="text" 
+                  id="vehicle-make" 
+                  class="form-input" 
+                  placeholder="Enter vehicle make"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="vehicle-model">
+                  <i class="fas fa-car"></i>
+                  Model
+                </label>
+                <input 
+                  type="text" 
+                  id="vehicle-model" 
+                  class="form-input" 
+                  placeholder="Enter vehicle model"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="vehicle-vin">
+                  <i class="fas fa-barcode"></i>
+                  VIN Number
+                </label>
+                <input 
+                  type="text" 
+                  id="vehicle-vin" 
+                  class="form-input" 
+                  placeholder="Enter VIN number"
+                  required
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="vehicle-price">
+                  <i class="fas fa-dollar-sign"></i>
+                  Price
+                </label>
+                <input 
+                  type="number" 
+                  id="vehicle-price" 
+                  class="form-input" 
+                  placeholder="Enter price"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div class="btn-group">
+              <button type="submit" class="btn btn-success" id="save-vehicle-btn">
+                <i class="fas fa-save"></i>
+                Save Vehicle
+              </button>
+              <button type="button" class="btn btn-secondary" id="cancel-vehicle-btn">
+                <i class="fas fa-times"></i>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        <div id="vehicles-list">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Make</th>
+                <th>Model</th>
+                <th>VIN</th>
+                <th>Price</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="vehicles-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem;">
+                  <div class="loading"></div>
+                  Loading vehicles...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="vehicle-alerts"></div>
+      </div>
+    </div>
   </div>
 
 <script>
-async function loadData() {
-  try {
-    const d = await fetch('/api/dealers').then(r=>r.json());
-    const v = await fetch('/api/vehicles').then(r=>r.json());
-    const dealerSel = document.getElementById('dealer');
-    d.forEach(x => {
-      const opt = document.createElement('option');
-      opt.value = x.id; opt.text = x.name + ' ('+x.id+')';
-      dealerSel.appendChild(opt);
-    });
-    const vehicleSel = document.getElementById('vehicle');
-    v.forEach(x => {
-      const opt = document.createElement('option');
-      opt.value = x.id; opt.text = x.make + ' ' + x.model + ' - ₹' + x.price;
-      vehicleSel.appendChild(opt);
-    });
-  } catch(e) {
-    document.getElementById('error').innerText = 'Failed to load data: ' + e;
+// Application State Management
+class AppState {
+  constructor() {
+    this.dealers = [];
+    this.vehicles = [];
+    this.currentEditingDealer = null;
+    this.currentEditingVehicle = null;
+    this.loading = {
+      dealers: false,
+      vehicles: false,
+      invoice: false
+    };
+  }
+
+  setLoading(key, value) {
+    this.loading[key] = value;
+  }
+
+  setDealers(dealers) {
+    this.dealers = dealers;
+  }
+
+  setVehicles(vehicles) {
+    this.vehicles = vehicles;
+  }
+
+  addDealer(dealer) {
+    this.dealers.push(dealer);
+  }
+
+  updateDealer(updatedDealer) {
+    const index = this.dealers.findIndex(d => d.id === updatedDealer.id);
+    if (index !== -1) {
+      this.dealers[index] = updatedDealer;
+    }
+  }
+
+  removeDealer(dealerId) {
+    this.dealers = this.dealers.filter(d => d.id !== dealerId);
+  }
+
+  addVehicle(vehicle) {
+    this.vehicles.push(vehicle);
+  }
+
+  updateVehicle(updatedVehicle) {
+    const index = this.vehicles.findIndex(v => v.id === updatedVehicle.id);
+    if (index !== -1) {
+      this.vehicles[index] = updatedVehicle;
+    }
+  }
+
+  removeVehicle(vehicleId) {
+    this.vehicles = this.vehicles.filter(v => v.id !== vehicleId);
   }
 }
 
-document.getElementById('gen').addEventListener('click', async () => {
-  document.getElementById('status').innerText=''; document.getElementById('error').innerText='';
-  const dealerId = Number(document.getElementById('dealer').value);
-  const vehicleId = Number(document.getElementById('vehicle').value);
-  const customerName = document.getElementById('customer').value.trim();
-  if(!customerName){ document.getElementById('error').innerText='Enter customer name'; return; }
-  try {
-    const resp = await fetch('/api/invoices', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({dealerId, vehicleId, customerName})
-    });
-    if(!resp.ok){ const t = await resp.text(); throw new Error(t || resp.status); }
-    const blob = await resp.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'invoice.pdf';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-    document.getElementById('status').innerText = 'Invoice downloaded.';
-  } catch(e) {
-    document.getElementById('error').innerText = 'Error: ' + e.message;
-  }
-});
+// API Service with error handling
+class ApiService {
+  static async request(url, options = {}) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers
+        },
+        ...options
+      });
 
-loadData();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      if (options.responseType === 'blob') {
+        return await response.blob();
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API Request failed:', error);
+      throw error;
+    }
+  }
+
+  static async getDealers() {
+    return this.request('/api/dealers');
+  }
+
+  static async getVehicles() {
+    return this.request('/api/vehicles');
+  }
+
+  static async createDealer(dealerData) {
+    return this.request('/api/dealers', {
+      method: 'POST',
+      body: JSON.stringify(dealerData)
+    });
+  }
+
+  static async updateDealer(id, dealerData) {
+    return this.request(`/api/dealers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(dealerData)
+    });
+  }
+
+  static async deleteDealer(id) {
+    return this.request(`/api/dealers/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  static async createVehicle(vehicleData) {
+    return this.request('/api/vehicles', {
+      method: 'POST',
+      body: JSON.stringify(vehicleData)
+    });
+  }
+
+  static async updateVehicle(id, vehicleData) {
+    return this.request(`/api/vehicles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(vehicleData)
+    });
+  }
+
+  static async deleteVehicle(id) {
+    return this.request(`/api/vehicles/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  static async generateInvoice(invoiceData) {
+    return this.request('/api/invoices', {
+      method: 'POST',
+      body: JSON.stringify(invoiceData),
+      responseType: 'blob'
+    });
+  }
+}
+
+// UI Components
+class UIComponents {
+  static showAlert(containerId, message, type = 'info') {
+    const container = document.getElementById(containerId);
+    const alertClass = `alert-${type}`;
+    const icon = type === 'success' ? 'check-circle' : 
+                 type === 'error' ? 'exclamation-triangle' : 'info-circle';
+    
+    container.innerHTML = `
+      <div class="alert ${alertClass} fade-in">
+        <i class="fas fa-${icon}"></i>
+        ${message}
+      </div>
+    `;
+
+    // Auto-hide after 5 seconds for success messages
+    if (type === 'success') {
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 5000);
+    }
+  }
+
+  static clearAlerts(containerId) {
+    document.getElementById(containerId).innerHTML = '';
+  }
+
+  static setButtonLoading(buttonId, loading, originalText) {
+    const button = document.getElementById(buttonId);
+    if (loading) {
+      button.disabled = true;
+      button.innerHTML = `<div class="loading"></div> Loading...`;
+    } else {
+      button.disabled = false;
+      button.innerHTML = originalText;
+    }
+  }
+
+  static populateSelect(selectId, items, textFormatter, placeholder = 'Select an option') {
+    const select = document.getElementById(selectId);
+    select.innerHTML = `<option value="">${placeholder}</option>`;
+    
+    items.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = textFormatter(item);
+      select.appendChild(option);
+    });
+  }
+
+  static createTableRow(data, actions) {
+    const row = document.createElement('tr');
+    
+    // Add data cells
+    Object.values(data).forEach(value => {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
+
+    // Add actions cell
+    const actionsCell = document.createElement('td');
+    actionsCell.innerHTML = actions;
+    row.appendChild(actionsCell);
+
+    return row;
+  }
+
+  static validateForm(formId) {
+    const form = document.getElementById(formId);
+    const inputs = form.querySelectorAll('input[required], select[required]');
+    let isValid = true;
+
+    inputs.forEach(input => {
+      if (!input.value.trim()) {
+        input.classList.add('error');
+        isValid = false;
+      } else {
+        input.classList.remove('error');
+      }
+    });
+
+    return isValid;
+  }
+
+  static clearForm(formId) {
+    const form = document.getElementById(formId);
+    form.reset();
+    form.querySelectorAll('.error').forEach(input => {
+      input.classList.remove('error');
+    });
+  }
+}
+
+// Application Controller
+class InvoiceApp {
+  constructor() {
+    this.state = new AppState();
+    this.init();
+  }
+
+  async init() {
+    this.setupEventListeners();
+    await this.loadInitialData();
+  }
+
+  setupEventListeners() {
+    // Tab switching
+    document.querySelectorAll('.tab-button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        this.switchTab(e.target.dataset.tab);
+      });
+    });
+
+    // Invoice form
+    document.getElementById('invoice-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.generateInvoice();
+    });
+
+    // Dealer management
+    document.getElementById('add-dealer-btn').addEventListener('click', () => {
+      this.showDealerForm();
+    });
+
+    document.getElementById('dealer-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveDealer();
+    });
+
+    document.getElementById('cancel-dealer-btn').addEventListener('click', () => {
+      this.hideDealerForm();
+    });
+
+    // Vehicle management
+    document.getElementById('add-vehicle-btn').addEventListener('click', () => {
+      this.showVehicleForm();
+    });
+
+    document.getElementById('vehicle-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveVehicle();
+    });
+
+    document.getElementById('cancel-vehicle-btn').addEventListener('click', () => {
+      this.hideVehicleForm();
+    });
+  }
+
+  switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+
+    // Load data for the active tab
+    if (tabName === 'dealers') {
+      this.loadDealers();
+    } else if (tabName === 'vehicles') {
+      this.loadVehicles();
+    }
+  }
+
+  async loadInitialData() {
+    try {
+      const [dealers, vehicles] = await Promise.all([
+        ApiService.getDealers(),
+        ApiService.getVehicles()
+      ]);
+
+      this.state.setDealers(dealers);
+      this.state.setVehicles(vehicles);
+      this.updateInvoiceSelects();
+    } catch (error) {
+      UIComponents.showAlert('invoice-alerts', `Failed to load initial data: ${error.message}`, 'error');
+    }
+  }
+
+  updateInvoiceSelects() {
+    UIComponents.populateSelect(
+      'dealer-select',
+      this.state.dealers,
+      dealer => `${dealer.name} (ID: ${dealer.id})`,
+      'Select a dealer'
+    );
+
+    UIComponents.populateSelect(
+      'vehicle-select',
+      this.state.vehicles,
+      vehicle => `${vehicle.make} ${vehicle.model} - $${vehicle.price}`,
+      'Select a vehicle'
+    );
+  }
+
+  async generateInvoice() {
+    if (!UIComponents.validateForm('invoice-form')) {
+      UIComponents.showAlert('invoice-alerts', 'Please fill in all required fields', 'error');
+      return;
+    }
+
+    const dealerId = parseInt(document.getElementById('dealer-select').value);
+    const vehicleId = parseInt(document.getElementById('vehicle-select').value);
+    const customerName = document.getElementById('customer-name').value.trim();
+
+    UIComponents.setButtonLoading('generate-btn', true, '<i class="fas fa-download"></i> Generate & Download Invoice');
+    UIComponents.clearAlerts('invoice-alerts');
+
+    try {
+      const blob = await ApiService.generateInvoice({
+        dealerId,
+        vehicleId,
+        customerName
+      });
+
+      // Download the PDF
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      UIComponents.showAlert('invoice-alerts', 'Invoice generated and downloaded successfully!', 'success');
+      UIComponents.clearForm('invoice-form');
+    } catch (error) {
+      UIComponents.showAlert('invoice-alerts', `Failed to generate invoice: ${error.message}`, 'error');
+    } finally {
+      UIComponents.setButtonLoading('generate-btn', false, '<i class="fas fa-download"></i> Generate & Download Invoice');
+    }
+  }
+
+  async loadDealers() {
+    try {
+      const dealers = await ApiService.getDealers();
+      this.state.setDealers(dealers);
+      this.renderDealersTable();
+      this.updateInvoiceSelects();
+    } catch (error) {
+      UIComponents.showAlert('dealer-alerts', `Failed to load dealers: ${error.message}`, 'error');
+    }
+  }
+
+  renderDealersTable() {
+    const tbody = document.getElementById('dealers-table-body');
+    tbody.innerHTML = '';
+
+    if (this.state.dealers.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray-600);">
+            No dealers found. Add your first dealer to get started.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    this.state.dealers.forEach(dealer => {
+      const actions = `
+        <button class="btn btn-sm btn-primary" onclick="app.editDealer(${dealer.id})" style="margin-right: 0.5rem;">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-sm btn-danger" onclick="app.deleteDealer(${dealer.id})">
+          <i class="fas fa-trash"></i>
+        </button>
+      `;
+
+      const row = UIComponents.createTableRow({
+        id: dealer.id,
+        name: dealer.name,
+        address: dealer.address,
+        phone: dealer.phone,
+        taxNumber: dealer.taxNumber
+      }, actions);
+
+      tbody.appendChild(row);
+    });
+  }
+
+  showDealerForm(dealer = null) {
+    this.state.currentEditingDealer = dealer;
+    const container = document.getElementById('dealer-form-container');
+    const form = document.getElementById('dealer-form');
+    
+    if (dealer) {
+      document.getElementById('dealer-name').value = dealer.name;
+      document.getElementById('dealer-address').value = dealer.address;
+      document.getElementById('dealer-phone').value = dealer.phone;
+      document.getElementById('dealer-tax').value = dealer.taxNumber;
+      document.getElementById('save-dealer-btn').innerHTML = '<i class="fas fa-save"></i> Update Dealer';
+    } else {
+      UIComponents.clearForm('dealer-form');
+      document.getElementById('save-dealer-btn').innerHTML = '<i class="fas fa-save"></i> Save Dealer';
+    }
+
+    container.classList.remove('hidden');
+    container.classList.add('fade-in');
+  }
+
+  hideDealerForm() {
+    document.getElementById('dealer-form-container').classList.add('hidden');
+    this.state.currentEditingDealer = null;
+    UIComponents.clearForm('dealer-form');
+    UIComponents.clearAlerts('dealer-alerts');
+  }
+
+  async saveDealer() {
+    if (!UIComponents.validateForm('dealer-form')) {
+      UIComponents.showAlert('dealer-alerts', 'Please fill in all required fields', 'error');
+      return;
+    }
+
+    const dealerData = {
+      name: document.getElementById('dealer-name').value.trim(),
+      address: document.getElementById('dealer-address').value.trim(),
+      phone: document.getElementById('dealer-phone').value.trim(),
+      taxNumber: document.getElementById('dealer-tax').value.trim()
+    };
+
+    UIComponents.setButtonLoading('save-dealer-btn', true, '<i class="fas fa-save"></i> Saving...');
+
+    try {
+      let savedDealer;
+      if (this.state.currentEditingDealer) {
+        savedDealer = await ApiService.updateDealer(this.state.currentEditingDealer.id, dealerData);
+        this.state.updateDealer(savedDealer);
+        UIComponents.showAlert('dealer-alerts', 'Dealer updated successfully!', 'success');
+      } else {
+        savedDealer = await ApiService.createDealer(dealerData);
+        this.state.addDealer(savedDealer);
+        UIComponents.showAlert('dealer-alerts', 'Dealer created successfully!', 'success');
+      }
+
+      this.renderDealersTable();
+      this.updateInvoiceSelects();
+      this.hideDealerForm();
+    } catch (error) {
+      UIComponents.showAlert('dealer-alerts', `Failed to save dealer: ${error.message}`, 'error');
+    } finally {
+      UIComponents.setButtonLoading('save-dealer-btn', false, '<i class="fas fa-save"></i> Save Dealer');
+    }
+  }
+
+  editDealer(dealerId) {
+    const dealer = this.state.dealers.find(d => d.id === dealerId);
+    if (dealer) {
+      this.showDealerForm(dealer);
+    }
+  }
+
+  async deleteDealer(dealerId) {
+    if (!confirm('Are you sure you want to delete this dealer?')) {
+      return;
+    }
+
+    try {
+      await ApiService.deleteDealer(dealerId);
+      this.state.removeDealer(dealerId);
+      this.renderDealersTable();
+      this.updateInvoiceSelects();
+      UIComponents.showAlert('dealer-alerts', 'Dealer deleted successfully!', 'success');
+    } catch (error) {
+      UIComponents.showAlert('dealer-alerts', `Failed to delete dealer: ${error.message}`, 'error');
+    }
+  }
+
+  async loadVehicles() {
+    try {
+      const vehicles = await ApiService.getVehicles();
+      this.state.setVehicles(vehicles);
+      this.renderVehiclesTable();
+      this.updateInvoiceSelects();
+    } catch (error) {
+      UIComponents.showAlert('vehicle-alerts', `Failed to load vehicles: ${error.message}`, 'error');
+    }
+  }
+
+  renderVehiclesTable() {
+    const tbody = document.getElementById('vehicles-table-body');
+    tbody.innerHTML = '';
+
+    if (this.state.vehicles.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray-600);">
+            No vehicles found. Add your first vehicle to get started.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    this.state.vehicles.forEach(vehicle => {
+      const actions = `
+        <button class="btn btn-sm btn-primary" onclick="app.editVehicle(${vehicle.id})" style="margin-right: 0.5rem;">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-sm btn-danger" onclick="app.deleteVehicle(${vehicle.id})">
+          <i class="fas fa-trash"></i>
+        </button>
+      `;
+
+      const row = UIComponents.createTableRow({
+        id: vehicle.id,
+        make: vehicle.make,
+        model: vehicle.model,
+        vin: vehicle.vin,
+        price: `$${vehicle.price}`
+      }, actions);
+
+      tbody.appendChild(row);
+    });
+  }
+
+  showVehicleForm(vehicle = null) {
+    this.state.currentEditingVehicle = vehicle;
+    const container = document.getElementById('vehicle-form-container');
+    
+    if (vehicle) {
+      document.getElementById('vehicle-make').value = vehicle.make;
+      document.getElementById('vehicle-model').value = vehicle.model;
+      document.getElementById('vehicle-vin').value = vehicle.vin;
+      document.getElementById('vehicle-price').value = vehicle.price;
+      document.getElementById('save-vehicle-btn').innerHTML = '<i class="fas fa-save"></i> Update Vehicle';
+    } else {
+      UIComponents.clearForm('vehicle-form');
+      document.getElementById('save-vehicle-btn').innerHTML = '<i class="fas fa-save"></i> Save Vehicle';
+    }
+
+    container.classList.remove('hidden');
+    container.classList.add('fade-in');
+  }
+
+  hideVehicleForm() {
+    document.getElementById('vehicle-form-container').classList.add('hidden');
+    this.state.currentEditingVehicle = null;
+    UIComponents.clearForm('vehicle-form');
+    UIComponents.clearAlerts('vehicle-alerts');
+  }
+
+  async saveVehicle() {
+    if (!UIComponents.validateForm('vehicle-form')) {
+      UIComponents.showAlert('vehicle-alerts', 'Please fill in all required fields', 'error');
+      return;
+    }
+
+    const vehicleData = {
+      make: document.getElementById('vehicle-make').value.trim(),
+      model: document.getElementById('vehicle-model').value.trim(),
+      vin: document.getElementById('vehicle-vin').value.trim(),
+      price: parseFloat(document.getElementById('vehicle-price').value)
+    };
+
+    UIComponents.setButtonLoading('save-vehicle-btn', true, '<i class="fas fa-save"></i> Saving...');
+
+    try {
+      let savedVehicle;
+      if (this.state.currentEditingVehicle) {
+        savedVehicle = await ApiService.updateVehicle(this.state.currentEditingVehicle.id, vehicleData);
+        this.state.updateVehicle(savedVehicle);
+        UIComponents.showAlert('vehicle-alerts', 'Vehicle updated successfully!', 'success');
+      } else {
+        savedVehicle = await ApiService.createVehicle(vehicleData);
+        this.state.addVehicle(savedVehicle);
+        UIComponents.showAlert('vehicle-alerts', 'Vehicle created successfully!', 'success');
+      }
+
+      this.renderVehiclesTable();
+      this.updateInvoiceSelects();
+      this.hideVehicleForm();
+    } catch (error) {
+      UIComponents.showAlert('vehicle-alerts', `Failed to save vehicle: ${error.message}`, 'error');
+    } finally {
+      UIComponents.setButtonLoading('save-vehicle-btn', false, '<i class="fas fa-save"></i> Save Vehicle');
+    }
+  }
+
+  editVehicle(vehicleId) {
+    const vehicle = this.state.vehicles.find(v => v.id === vehicleId);
+    if (vehicle) {
+      this.showVehicleForm(vehicle);
+    }
+  }
+
+  async deleteVehicle(vehicleId) {
+    if (!confirm('Are you sure you want to delete this vehicle?')) {
+      return;
+    }
+
+    try {
+      await ApiService.deleteVehicle(vehicleId);
+      this.state.removeVehicle(vehicleId);
+      this.renderVehiclesTable();
+      this.updateInvoiceSelects();
+      UIComponents.showAlert('vehicle-alerts', 'Vehicle deleted successfully!', 'success');
+    } catch (error) {
+      UIComponents.showAlert('vehicle-alerts', `Failed to delete vehicle: ${error.message}`, 'error');
+    }
+  }
+}
+
+// Add missing button styles
+const additionalStyles = `
+  .btn-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn-danger {
+    background: var(--error-color);
+    color: white;
+  }
+  
+  .btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+  }
+  
+  .btn-secondary {
+    background: var(--gray-600);
+    color: white;
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--gray-800);
+  }
+`;
+
+// Add styles to head
+const styleSheet = document.createElement('style');
+styleSheet.textContent = additionalStyles;
+document.head.appendChild(styleSheet);
+
+// Initialize the application
+const app = new InvoiceApp();
 </script>
 </body>
 </html>

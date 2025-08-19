@@ -1,9 +1,10 @@
 package com.example.invoice.controller;
 
-import com.example.invoice.AppData;
 import com.example.invoice.dto.InvoiceRequest;
 import com.example.invoice.model.Dealer;
 import com.example.invoice.model.Vehicle;
+import com.example.invoice.repository.DealerRepository;
+import com.example.invoice.repository.VehicleRepository;
 import com.example.invoice.service.InvoicePdfService;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
@@ -13,34 +14,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 public class InvoiceController {
 
-    private final AppData data;
+    private final DealerRepository dealerRepository;
+    private final VehicleRepository vehicleRepository;
     private final InvoicePdfService pdf;
 
-    public InvoiceController(AppData data, InvoicePdfService pdf) {
-        this.data = data; this.pdf = pdf;
+    public InvoiceController(DealerRepository dealerRepository, VehicleRepository vehicleRepository, InvoicePdfService pdf) {
+        this.dealerRepository = dealerRepository;
+        this.vehicleRepository = vehicleRepository;
+        this.pdf = pdf;
     }
 
-    @GetMapping("/dealers")
-    public ResponseEntity<?> dealers() {
-        return ResponseEntity.ok(data.dealers.values());
-    }
-
-    @GetMapping("/vehicles")
-    public ResponseEntity<?> vehicles() {
-        return ResponseEntity.ok(data.vehicles.values());
-    }
 
     @PostMapping(value = "/invoices", produces = "application/pdf")
     public ResponseEntity<byte[]> create(@Valid @RequestBody InvoiceRequest req) throws Exception {
-        Dealer dealer = Optional.ofNullable(data.dealers.get(req.dealerId))
+        Dealer dealer = dealerRepository.findById(req.dealerId)
                 .orElseThrow(() -> new IllegalArgumentException("Dealer not found"));
-        Vehicle vehicle = Optional.ofNullable(data.vehicles.get(req.vehicleId))
+        Vehicle vehicle = vehicleRepository.findById(req.vehicleId)
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
 
         var payload = pdf.buildPayload(dealer, vehicle, req.customerName);

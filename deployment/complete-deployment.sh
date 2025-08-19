@@ -1,0 +1,186 @@
+#!/bin/bash
+
+# Complete Deployment Script for Invoice App
+set -e
+
+# Variables - CUSTOMIZE THESE
+DOMAIN="13.60.60.242"  # Your EC2 IP address
+DB_PASSWORD="InvoiceApp2025!"  # Secure password
+APP_JAR_PATH="./invoice-app-0.0.1-SNAPSHOT.jar"  # Path to your JAR file
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+print_status() { echo -e "${GREEN}[INFO]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+echo "=== Invoice App Complete Deployment ==="
+
+# Step 1: System Setup
+print_status "Step 1: Setting up system..."
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y openjdk-17-jdk postgresql postgresql-contrib nginx maven
+
+# Step 2: Create application user and directories
+print_status "Step 2: Creating application user and directories..."
+sudo useradd -r -m -U -d /opt/invoice-app -s /bin/bash invoice || true
+sudo mkdir -p /opt/invoice-app /var/log/invoice-app
+sudo chown invoice:invoice /opt/invoice-app /var/log/invoice-app
+
+# Step 3: Database setup
+print_status "Step 3: Setting up PostgreSQL database..."
+sudo -u postgres psql << EOF
+CREATE DATABASE invoice_app_prod;
+CREATE USER invoice_user WITH ENCRYPTED PASSWORD '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON DATABASE invoice_app_prod TO invoice_user;
+\c invoice_app_prod;
+GRANT ALL ON SCHEMA public TO invoice_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO invoice_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO invoice_user;
+EOF
+
+# Step 4: Copy and configure application
+print_status "Step 4: Deploying application..."
+if [ -f "$APP_JAR_PATH" ]; then
+    sudo cp "$APP_JAR_PATH" /opt/invoice-app/invoice-app.jar
+    sudo chown invoice:invoice /opt/invoice-app/invoice-app.jar
+else
+    print_error "JAR file not found at $APP_JAR_PATH"
+    print_warning "Please build your application first: mvn clean package"
+    exit 1
+fi
+
+# Step 5: Create systemd service
+print_status "Step 5: Creating systemd service..."
+sudo tee /etc/systemd/system/invoice-app.service > /dev/null << EOF
+[Unit]
+Description=Invoice App Spring Boot Application
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=invoice
+Group=invoice
+WorkingDirectory=/opt/invoice-app
+ExecStart=/usr/bin/java -jar /opt/invoice-app/invoice-app.jar --spring.profiles.active=prod
+ExecStop=/bin/kill -15 \$MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=invoice-app
+
+Environment=JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+Environment=DB_PASSWORD=$DB_PASSWORD
+Environment=SPRING_PROFILES_ACTIVE=prod
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/invoice-app
+ReadWritePaths=/opt/invoice-app
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Step 6: SSL Certificate
+print_status "Step 6: Creating SSL certificate..."
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/invoice-app.key \
+    -out /etc/ssl/certs/invoice-app.crt \
+    -subj "/C=US/ST=State/L=City/O=Invoice App/CN=$DOMAIN"
+
+sudo chmod 600 /etc/ssl/private/invoice-app.key
+sudo chmod 644 /etc/ssl/certs/invoice-app.crt
+
+# Step 7: Nginx configuration
+print_status "Step 7: Configuring Nginx..."
+sudo tee /etc/nginx/sites-available/invoice-app > /dev/null << EOF
+server {
+    listen 80;
+    server_name $DOMAIN;
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $DOMAIN;
+
+    ssl_certificate /etc/ssl/certs/invoice-app.crt;
+    ssl_certificate_key /etc/ssl/private/invoice-app.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+    }
+
+    location /api/invoices {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+EOF
+
+# Enable site
+sudo ln -sf /etc/nginx/sites-available/invoice-app /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Step 8: Start services
+print_status "Step 8: Starting services..."
+sudo systemctl daemon-reload
+sudo systemctl enable invoice-app
+sudo systemctl start invoice-app
+
+sudo nginx -t
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+
+# Step 9: Firewall
+print_status "Step 9: Configuring firewall..."
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw --force enable
+
+print_status "Deployment completed successfully!"
+echo ""
+print_status "Your application is now available at:"
+echo "  HTTPS: https://$DOMAIN"
+echo "  HTTP:  http://$DOMAIN (redirects to HTTPS)"
+echo ""
+print_status "API Endpoints:"
+echo "  Dealers:  https://$DOMAIN/api/dealers"
+echo "  Vehicles: https://$DOMAIN/api/vehicles"
+echo "  Invoices: https://$DOMAIN/api/invoices"
+echo "  Health:   https://$DOMAIN/actuator/health"
+echo ""
+print_status "Service management:"
+echo "  Status:   sudo systemctl status invoice-app"
+echo "  Logs:     sudo journalctl -u invoice-app -f"
+echo "  Restart:  sudo systemctl restart invoice-app"
+EOF
